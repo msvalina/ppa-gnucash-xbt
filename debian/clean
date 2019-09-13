@@ -1,0 +1,13 @@
+## Debian CI:
+debian/.gitlab-ci.yml
+debian/.yamllint
+
+src/optional/python-bindings/tests/*.pyc
+src/optional/python-bindings/tests/runTests.py.log
+src/optional/python-bindings/tests/runTests.py.trs
+src/optional/python-bindings/tests/test-suite.log
+src/test-core/unittest_support.pyc
+
+## 2.7.1:
+po/.intltool-merge-cache
+bindings/python/tests/*.pyc

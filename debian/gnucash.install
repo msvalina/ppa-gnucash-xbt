@@ -1,0 +1,10 @@
+## https://bugzilla.gnome.org/show_bug.cgi?id=790840
+usr/lib/*/gnucash/
+
+usr/bin/gnucash
+usr/bin/gnc-fq-check
+usr/bin/gnc-fq-dump
+usr/bin/gnc-fq-helper
+usr/bin/gnc-fq-update
+usr/share/applications/gnucash.desktop
+etc

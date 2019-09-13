@@ -1,0 +1,17 @@
+---
+extends: default
+
+rules:
+  line-length:
+    level: warning
+    max: 120
+  braces:
+    level: warning
+    max-spaces-inside: 8
+  trailing-spaces:
+    level: warning
+  colons:
+    level: warning
+    max-spaces-after: 16
+  empty-lines:
+    level: warning

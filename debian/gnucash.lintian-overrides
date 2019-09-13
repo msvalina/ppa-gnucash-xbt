@@ -1,0 +1,6 @@
+gnucash: hardening-no-fortify-functions *
+
+## Guile-2.2:
+binary-from-other-architecture usr/lib/*/gnucash/scm/ccache/2.2/*
+unstripped-binary-or-object usr/lib/*/gnucash/scm/ccache/2.2/*
+shared-lib-without-dependency-information usr/lib/*/gnucash/scm/ccache/2.2/*

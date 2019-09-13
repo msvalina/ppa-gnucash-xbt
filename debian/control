@@ -1,0 +1,100 @@
+Source: gnucash
+Section: gnome
+Priority: optional
+Maintainer: Dmitry Smirnov <onlyjob@debian.org>
+Standards-Version: 4.4.0
+Build-Depends: debhelper (>= 11~), pkg-config, dh-python
+    ,cmake
+    ,googletest
+    ,guile-2.2-dev | guile-2.0-dev
+    ,imagemagick
+    ,libaqbanking-dev
+    ,libboost-dev
+    ,libboost-date-time-dev
+    ,libboost-filesystem-dev
+    ,libboost-locale-dev
+    ,libboost-regex-dev
+    ,libdbi-dev
+    ,libdbd-sqlite3
+    ,libglib2.0-dev
+    ,libsecret-1-dev
+#   ,libgoffice-0.10-dev
+    ,libgtk-3-dev
+    ,libgwengui-gtk3-dev
+    ,libofx-dev
+    ,libwebkit2gtk-4.0-dev
+    ,libxml2-dev
+    ,libxml2-utils
+    ,libxslt1-dev
+    ,python3
+    ,python3-dev
+    ,swig
+    ,texinfo
+    ,xsltproc
+    ,zlib1g-dev
+## Needed by tests:
+    ,locales-all
+#   ,faketime
+Build-Conflicts: guile-1.8
+Homepage: http://www.gnucash.org/
+Vcs-Browser: https://salsa.debian.org/debian/gnucash
+Vcs-Git: https://salsa.debian.org/debian/gnucash.git
+
+Package: gnucash
+Built-Using: ${my:Built-Using}
+Architecture: any
+Depends: gnucash-common (= ${source:Version}), ${shlibs:Depends}
+    ,${aqbanking:Depends} ,${misc:Depends} ,${perl:Depends}
+    ,guile-2.2 | guile-2.0
+    ,libfinance-quote-perl
+    ,libwww-perl
+    ,libhtml-tree-perl
+    ,libhtml-tableextract-perl
+    ,libcrypt-ssleay-perl
+    ,libdate-manip-perl
+Suggests: libdbd-mysql, libdbd-pgsql, libdbd-sqlite3
+Recommends: gnucash-docs
+           ,python3-gnucash
+           ,yelp
+Breaks: gnucash-common (<< 1:2.4.8-1~)
+Replaces: gnucash-common (<< 1:2.4.8-1~)
+Description: personal and small-business financial-accounting software
+ Gnucash provides accounting functions suitable for use by small businesses and
+ individuals. It can track finances in multiple accounts, keeping running and
+ reconciled balances. There is support for customer, vendor and employee
+ processing. It has an X based graphical user interface, double entry, a
+ hierarchy of accounts, expense accounts (categories), and can import Quicken
+ QIF files and OFX files.
+
+Package: gnucash-common
+Architecture: all
+Depends: ${misc:Depends}, libjs-jquery
+Recommends: gnucash (>= ${source:Version})
+Breaks: gnucash (<< 2.4.0-1~)
+Replaces: gnucash (<< 2.4.0-1~)
+Description: common files for the financial-accounting software Gnucash
+ Gnucash provides accounting functions suitable for use by small businesses and
+ individuals. It can track finances in multiple accounts, keeping running and
+ reconciled balances. There is support for customer, vendor and employee
+ processing. It has an X based graphical user interface, double entry, a
+ hierarchy of accounts, expense accounts (categories), and can import Quicken
+ QIF files and OFX files.
+ .
+ This package contains the architecture independent parts of Gnucash. It should
+ not be installed directly, but is pulled in automatically by the dependencies
+ of the Gnucash package.
+
+Package: python3-gnucash
+Section: python
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}, ${python3:Depends}
+Description: Gnucash interface for Python
+ Gnucash provides accounting functions suitable for use by small businesses and
+ individuals. It can track finances in multiple accounts, keeping running and
+ reconciled balances. There is support for customer, vendor and employee
+ processing. It has an X based graphical user interface, double entry, a
+ hierarchy of accounts, expense accounts (categories), and can import Quicken
+ QIF files and OFX files.
+ .
+ This package contains the Python bindings for Gnucash which allow you to read
+ and manipulate Gnucash data files.

@@ -1,0 +1,129 @@
+---
+variables:
+  GIT_DEPTH: 128
+  PB_RESULT: '${CI_PROJECT_DIR}/../${CI_PROJECT_NAME}_${CI_BUILD_REF}_${CI_JOB_NAME}_${CI_JOB_ID}'
+  LINTIAN_CMD: eval lintian --no-tag-display-limit --info --display-info --color=auto --display-experimental --pedantic "${PB_RESULT}"/*.changes
+  AUTOPKGTEST_CMD: eval autopkgtest --apt-upgrade --user debci --output-dir "${PB_RESULT}"/debci -- lxc --sudo --ephemeral autopkgtest-unstable-amd64
+  ORIGTAR_CMD: origtargz --tar-only
+# PDEBUILD_CMD: eval pdebuild --use-pdebuild-internal --pbuildersatisfydepends "/usr/lib/pbuilder/pbuilder-satisfydepends-classic" --buildresult "${PB_RESULT}" --debbuildopts -sa
+  PDEBUILD_CMD: eval pdebuild --use-pdebuild-internal --buildresult "${PB_RESULT}" --debbuildopts -sa
+  EATMYDATA: "yes"
+  AUTOCLEANAPTCACHE: "yes"
+  USE_PDEBUILD_INTERNAL: "yes"
+
+.origtargz:
+  script: &origtargz |
+    ${ORIGTAR_CMD}
+    rm -rf .git
+#    debian/unpack-components.sh
+
+.pre_build:
+  script: &pre_build |
+    uname -a
+    date
+    env
+    pwd
+    mkdir -v -p "${PB_RESULT}"
+
+stages:
+  - check
+  - build
+
+dpkg-control:
+  stage: check
+  tags:
+    - cme
+  dependencies: []
+  allow_failure: false
+  script:
+    - wrap-and-sort --keep-first --trailing-comma # terrible way to fix "Cannot parse: ''" in "cme check dpkg-control".
+    - cme check dpkg-control
+
+dpkg-copyright:
+  stage: check
+  tags:
+    - cme
+  dependencies: []
+  allow_failure: false
+  script: |
+    cme check dpkg-copyright
+
+yamllint:
+  stage: check
+  tags:
+    - yamllint
+  dependencies: []
+  allow_failure: false
+  script: |
+    yamllint -c debian/.yamllint debian/.*.yml
+
+## Build
+
+unstable-binary-indep:
+  stage: build
+  tags:
+    - pbuilder
+    - amd64
+  dependencies: []
+## https://bugs.debian.org/867822
+  allow_failure: false
+  before_script:
+    - *pre_build
+  script:
+    - *origtargz
+    - pdebuild --debbuildopts "-A" --use-pdebuild-internal --buildresult "${PB_RESULT}" --architecture all -- --binary-indep --basetgz /var/cache/pbuilder/unstable-amd64.tgz
+
+testing_unstable-amd64:
+  stage: build
+  tags:
+    - pbuilder
+    - amd64
+  dependencies: []
+  allow_failure: false
+  before_script:
+    - *pre_build
+  script:
+    - *origtargz
+    - ${PDEBUILD_CMD} --architecture amd64 -- --basetgz /var/cache/pbuilder/testing_unstable-amd64.tgz
+    - ${LINTIAN_CMD}
+
+unstable-i386:
+  stage: build
+  tags:
+    - pbuilder
+    - amd64
+  dependencies: []
+  allow_failure: false
+  before_script:
+    - *pre_build
+  script:
+    - *origtargz
+    - ${PDEBUILD_CMD} --architecture i386 -- --basetgz /var/cache/pbuilder/unstable-i386.tgz
+
+unstable-amd64:
+  stage: build
+  tags:
+    - pbuilder
+    - amd64
+  dependencies: []
+  allow_failure: false
+  before_script:
+    - *pre_build
+  script:
+    - *origtargz
+    - ${PDEBUILD_CMD} --architecture amd64 -- --basetgz /var/cache/pbuilder/unstable-amd64.tgz
+    - ${LINTIAN_CMD}
+
+buster-amd64:
+  stage: build
+  tags:
+    - pbuilder
+    - amd64
+  dependencies: []
+  allow_failure: false
+  before_script:
+    - *pre_build
+  script:
+    - *origtargz
+    - ${PDEBUILD_CMD} --architecture amd64 -- --basetgz /var/cache/pbuilder/buster-amd64.tgz
+

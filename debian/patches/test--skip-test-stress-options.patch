@@ -1,0 +1,18 @@
+Last-Update: 2018-10-02
+Forwarded: not-needed
+Bug-Upstream: https://bugs.gnucash.org/show_bug.cgi?id=796877
+Author: Dmitry Smirnov <onlyjob@member.fsf.org>
+Description: skip broken test
+
+--- a/gnucash/report/standard-reports/test/CMakeLists.txt
++++ b/gnucash/report/standard-reports/test/CMakeLists.txt
+@@ -16,9 +16,8 @@
+   test-average-balance.scm
+ )
+ 
+ set(scm_test_with_textual_ports_SOURCES
+-    test-stress-options.scm
+ )
+ 
+ set(GUILE_DEPENDS
+   scm-gnc-module

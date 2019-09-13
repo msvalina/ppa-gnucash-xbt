@@ -1,0 +1,24 @@
+Add Bitcoin cryptocurrency
+--- a/libgnucash/engine/iso-4217-currencies.xml
++++ b/libgnucash/engine/iso-4217-currencies.xml
+@@ -2854,6 +2854,20 @@
+   smallest-fraction="100"
+   local-symbol="Z.$"
+ />
++<!-- "XBT" - "Bitcoin"
++-->
++<currency
++  isocode="XBT"
++  fullname="Bitcoin"
++  unitname="bitcoin"
++  partname="microbitcoin"
++  namespace="ISO4217"
++  exchange-code="nil"
++  parts-per-unit="1000000"
++  smallest-fraction="1000000"
++  local-symbol="XBT"
++/>
++
+ 
+ <!-- multinational -->
+ <!-- "XAF" - "CFA Franc BEAC"

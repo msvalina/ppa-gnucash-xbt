@@ -1,0 +1,124 @@
+#!/usr/bin/make -f
+
+# Uncomment this to turn on verbose mode.
+#export DH_VERBOSE=1
+
+include /usr/share/dpkg/pkg-info.mk
+include /usr/share/dpkg/architecture.mk
+
+ifeq ($(DEB_TARGET_ARCH_ENDIAN),big)
+    CMAKE_WORDS_BIGENDIAN = -DWORDS_BIGENDIAN=1
+endif
+
+# Hack for Gnucash build system
+#export BUILDING_FROM_VCS=$(if $(wildcard libgnucash/core-utils/gnc-vcs-info.h),yes,no)
+
+# reduce overlinking
+#export DEB_LDFLAGS_MAINT_APPEND += -Wl,--as-needed
+
+#export DEB_CXXFLAGS_MAINT_APPEND= -Wno-error=stringop-truncation
+
+export DEB_BUILD_MAINT_OPTIONS = hardening=+all
+
+export GMOCK_ROOT=$(CURDIR)/.build/__gtest/googlemock
+export GTEST_ROOT=$(CURDIR)/.build/__gtest/googletest
+export HOME=$(CURDIR)/debian/tmp
+
+export GUILE_AUTO_COMPILE=0
+#;;; compiling /usr/bin/guild
+#;;; WARNING: compilation of /usr/bin/guild failed:
+#;;; ERROR: failed to create path for auto-compiled file "/usr/bin/guild"
+
+%:
+	dh $@ --buildsystem=cmake --with python3,aqbanking --builddirectory=.build
+
+override_dh_auto_clean:
+	$(RM) -rv .build/__gtest */*/*/.libs */*/.libs
+	find . -type l -exec rm -v \{\} \;
+	rm -fv debian/gnucash-icon-32x32.xpm
+	dh_auto_clean
+
+#override_dh_autoreconf:
+#	dh_autoreconf --as-needed
+
+override_dh_auto_configure:
+	## copy gtest sources
+	mkdir -p .build/__gtest
+	cp -Rv /usr/src/googletest/* .build/__gtest/
+	env    ## debug
+	mkdir -v -p \
+	    "$${HOME}"/.local/share/GnuCash/books \
+	    "$${HOME}"/.local/share/GnuCash/checks \
+	    "$${HOME}"/.local/share/GnuCash/translog
+	dh_auto_configure -- -Wdev \
+               -DCMAKE_VERBOSE_MAKEFILE=ON  \
+               -DCMAKE_BUILD_TYPE=Release   \
+               -DCMAKE_CXX_FLAGS="$(CXXFLAGS) $(CPPFLAGS)" \
+               -DWITH_PYTHON=ON             \
+               -DCMAKE_INSTALL_LIBDIR=/usr/lib/$(DEB_HOST_MULTIARCH)/gnucash \
+                $(CMAKE_WORDS_BIGENDIAN) \
+        ;
+
+#		--libdir=/usr/lib/$(DEB_HOST_MULTIARCH)/gnucash \
+#		--infodir=/noinst \
+#		--mandir=/noinst \
+#		--docdir=/noinst \
+#		--disable-static \
+#		--enable-dbi \
+#		--enable-ofx \
+#		--enable-aqbanking \
+#		--enable-locale-specific-tax \
+#		--enable-python
+
+
+# override this call, so we do not use parallelization
+# see https://bugzilla.gnome.org/show_bug.cgi?id=644896
+override_dh_auto_install:
+	dh_auto_install --max-parallel=1
+
+override_dh_install:
+	$(RM) -fv debian/tmp/usr/share/glib-2.0/schemas/gschemas.compiled  # L:package-contains-compiled-glib-schema
+#	convert src/pixmaps/gnucash-icon-32x32.png debian/gnucash-icon-32x32.xpm
+	pod2man -s1 --stderr --utf8 debian/tmp/usr/bin/gnc-fq-check debian/tmp/gnc-fq-check.1
+	find debian/tmp/usr/lib -name \*.la -exec rm -v \{\} \;
+	dh_install
+
+override_dh_compress:
+	## Don't compress certain files (#895256):
+	dh_compress -XAUTHORS -XDOCUMENTERS -XLICENSE
+
+override_dh_auto_test:
+ifeq (,$(filter nocheck,$(DEB_BUILD_OPTIONS)))
+	$(MAKE) -C .build check; sh -x -c 'RV=$$0; [ "$${RV}" -eq 0 ] || cat ".build/Testing/Temporary/LastTest.log"; exit $${RV}' $$?
+#	TZ=PST8PDT $(MAKE) -C .build check
+#	set -ex ;\
+#        for T in -1 +1 -2 +2 -3 +3 -4 +4 -5 +5 -6 +6 -7 +7 -8 +8 -9 +9 -10 +10 -11 +11 -12 +12; do \
+#          TZ="Etc/GMT$$T" faketime '2014-12-24 08:55:42' $(MAKE) -C .build check ;\
+#          TZ="Etc/GMT$$T" $(MAKE) -C .build check ;\
+#        done
+endif
+
+##dh_strip: is "Unable to recognise the format of the input file" of *.go files:
+##dh_strip: strip --remove-section=.comment --remove-section=.note --strip-unneeded debian/gnucash/usr/lib/x86_64-linux-gnu/gnucash/gnucash/scm/2.2/html-jqplot.go returned exit code 1
+override_dh_strip:
+	dh_strip --dbgsym-migration='gnucash-dbg (<< 1:2.6.13~)' -X.go
+
+## .go files are not what dwz expects:
+## * DWARF compression not beneficial
+## * Section overlap detected
+override_dh_dwz:
+	dh_dwz -X.go
+
+override_dh_gencontrol:
+	dh_gencontrol -- -Vmy:Built-Using="$(foreach pkg,googletest,$(word 2,$(shell dpkg --status $(pkg) | grep ^Package)) (=$(word 2,$(shell dpkg --status $(pkg) | grep Version))),)"
+
+# Generate an shlibs files because otherwise dpkg-shlibdeps will fail on
+# python-gnucash. But do not distribute the shlibs file in the package, since
+# this creates a lot of lintian warning (many dynamic libraries do not have a
+# correct SOVERSION).
+override_dh_makeshlibs:
+	dh_makeshlibs -n --version-info="gnucash (= ${DEB_VERSION})"
+
+override_dh_shlibdeps:
+	dh_shlibdeps
+	rm -f debian/gnucash/DEBIAN/shlibs
